@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from typing import List
 import json
 import os
@@ -11,14 +12,13 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=False,
+    allow_credentials=False,    # must be False when using "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Load JSON telemetry data (file is one level up from /api)
 json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../q-vercel-latency.json"))
-
 with open(json_path, "r") as f:
     telemetry_data = json.load(f)
 
@@ -26,7 +26,15 @@ with open(json_path, "r") as f:
 def home():
     return {"message": "Latency API running"}
 
-@app.post("/api/latency")   # ✅ endpoint is /api/latency
+# ✅ GET handler for browser convenience
+@app.get("/api/latency")
+def latency_info():
+    return {
+        "message": "This endpoint accepts POST requests with JSON body {\"regions\": [...], \"threshold_ms\": N}"
+    }
+
+# ✅ POST handler for actual computation
+@app.post("/api/latency")
 async def latency(request: Request):
     body = await request.json()
     regions: List[str] = body.get("regions", [])
@@ -35,7 +43,6 @@ async def latency(request: Request):
     response = {}
 
     for region in regions:
-        # ✅ fixed bug: use telemetry_data, not latency_data
         region_data = [r for r in telemetry_data if r["region"] == region]
         if not region_data:
             continue
@@ -50,7 +57,27 @@ async def latency(request: Request):
             "breaches": sum(1 for l in latencies if l > threshold_ms)
         }
 
-    return response
+    # ✅ Explicit CORS headers
+    return JSONResponse(
+        content=response,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*"
+        }
+    )
+
+# ✅ Handle preflight requests
+@app.options("/api/latency")
+async def options_latency():
+    return JSONResponse(
+        content={},
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "*"
+        }
+    )
 
 if __name__ == "__main__":
     import uvicorn
