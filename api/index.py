@@ -11,7 +11,7 @@ app = FastAPI()
 # Enable CORS for all origins (POST + OPTIONS)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://vercelapp-nine-rust.vercel.app"],  
+    allow_origins=["https://vercelapp-nine-rust.vercel.app/api/latency"],  
     allow_credentials=True,
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
