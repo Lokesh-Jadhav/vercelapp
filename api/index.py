@@ -24,10 +24,10 @@ with open(json_path, "r") as f:
 
 @app.get("/")
 def home():
-    return {"status": "Telemetry API running"}
+    return {"message": "Latency API running"}
 
-@app.post("/api/telemetry")
-async def telemetry(request: Request):
+@app.post("/api/latency")   # ✅ endpoint is /api/latency
+async def latency(request: Request):
     body = await request.json()
     regions: List[str] = body.get("regions", [])
     threshold_ms: int = body.get("threshold_ms", 0)
@@ -35,6 +35,7 @@ async def telemetry(request: Request):
     response = {}
 
     for region in regions:
+        # ✅ fixed bug: use telemetry_data, not latency_data
         region_data = [r for r in telemetry_data if r["region"] == region]
         if not region_data:
             continue
