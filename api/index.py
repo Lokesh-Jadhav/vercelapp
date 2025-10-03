@@ -11,11 +11,12 @@ app = FastAPI()
 # Enable CORS for all origins (POST + OPTIONS)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False,    # must be False when using "*"
-    allow_methods=["*"],
+    allow_origins=["https://vercelapp-nine-rust.vercel.app"],  
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
 
 # Load JSON telemetry data (file is one level up from /api)
 json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../q-vercel-latency.json"))
